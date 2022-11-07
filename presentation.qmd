@@ -1084,6 +1084,28 @@ print(classes_names[5])
 print(res)
 ```
 
+## Resultados finais 
+
+Acurácia por ataque tipo de ataque para o experimento de um modelo por dispositivo, quando o dispositivo é a Provision PT 838 Security Camera e temos o comprimento da série temporal $m = 200$.
+
+![](images/attack_per_device.png){fig-align="center" width="1000"}
+
+## Resultados finais 
+
+Considerando o caso com comprimento de série temporal $m = 1000$ tanto a sensibilidade quanto a especificidade são de $100\%$. 
+
+- Meidan et al. [^1] têm uma taxa de falsos positivos de 0,007 (1-especificidade) 
+
+- Nomm et al. [^2] têm uma precisão média de 96,64% para todos os dispositivos. 
+
+- Alqahtani et al. [^3] também atingem $100\%$ de precisão ao realizar um experimento com um modelo por dispositivo; no entanto, os autores usaram dados benignos e de ataque durante a fase de treinamento. 
+
+[^1]: MEIDAN, Yair et al. N-baiot—network-based detection of iot botnet attacks using deep autoencoders. IEEE Pervasive Computing, v. 17, n. 3, p. 12-22, 2018.
+
+[^2]: NÕMM, Sven; BAHŞI, Hayretdin. Unsupervised anomaly based botnet detection in IoT networks. In: 2018 17th IEEE international conference on machine learning and applications (ICMLA). IEEE, 2018. p. 1048-1053.
+
+[^3]: ALQAHTANI, Mnahi; MATHKOUR, Hassan; BEN ISMAIL, Mohamed Maher. IoT botnet attack detection based on optimized extreme gradient boosting and feature selection. Sensors, v. 20, n. 21, p. 6336, 2020.
+
 # Outras aplicações
 
 ## Outras aplicações
