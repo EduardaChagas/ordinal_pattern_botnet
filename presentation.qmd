@@ -703,14 +703,14 @@ lapply(probs_3_1, FisherEntropy)
 
 ![](images/BoundariesPlot.png){fig-align="center" width="1000"}
 
-## Plano Entropia-Complexidade
+<!--## Plano Entropia-Complexidade
 
 ```{r}
 prob_matrix <- t(do.call("cbind",probs_3_1))[1:9,]
 HCPlane(prob = prob_matrix)
 ```
 
-<!--## Plano Fisher-Shannon
+## Plano Fisher-Shannon
 
 <br/>
 
