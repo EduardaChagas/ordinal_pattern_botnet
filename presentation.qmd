@@ -87,13 +87,11 @@ theme_set(theme_gray(base_size = 18))
 
 <br/>
 
-A apresentação se encontra disponível no seguinte link:
+**Github**: [github.com/EduardaChagas/ordinal_pattern_botnet](https://github.com/EduardaChagas/ordinal_pattern_botnet)
 
-![](images/QRCode_apresentacao.png){width="300"}
+**Apresentação RPubs**: [rpubs.com/EduardaChagas/967055](https://rpubs.com/EduardaChagas/967055)
 
 ## Como será a apresentação?
-
-
 
 <br/><br/>
 
