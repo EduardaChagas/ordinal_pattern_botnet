@@ -1,0 +1,1161 @@
+---
+pagetitle: "Uso de padrões ordinais na caracterização e análise de ataques de botnets em Internet das Coisas (IoT)"
+author: "Eduarda-Chagas"
+format:
+  revealjs:
+    theme: slides.scss
+    transition: fade
+    background-transition: fade
+    height: 900
+    width: 1600
+    fontcolor: "#262d36"
+    highlight-style: ayu-mirage
+code-link: true
+execute:
+  echo: true
+  freeze: auto
+editor: 
+  markdown: 
+    wrap: sentence
+---
+
+[Uso de padrões ordinais na caracterização e análise de ataques de botnets em Internet das Coisas (IoT)]{.custom-title}
+
+[Eduarda Chagas, João Borgues e<br>Heitor Ramos<br>PPGCC - DCC]{.custom-author}
+
+# Introdução
+
+```{r}
+#| echo: false
+if(!require(ggplot2)){
+  install.packages("ggplot2")
+  require(ggplot2)
+} 
+if(!require(ggthemes)){
+  install.packages("ggthemes")
+  require(ggthemes)
+} 
+if(!require(ggpubr)){
+  install.packages("ggpubr")
+  require(ggpubr)
+} 
+if(!require(reshape2)){
+  install.packages("reshape2")
+  require(reshape2)
+} 
+if(!require(pdc)){
+  install.packages("pdc")
+  require(pdc)
+} 
+if(!require(LaplacesDemon)){
+  install.packages("LaplacesDemon")
+  require(LaplacesDemon)
+}  
+if(!require(isotree)){
+  install.packages("isotree")
+  require(isotree)
+} 
+if(!require(NATS)){
+  install.packages("NATS_0.0.0.9000.tar.gz")
+  require(NATS)
+} 
+
+options(dplyr.print_min = 6, dplyr.print_max = 6)
+theme_set(theme_gray(base_size = 18))
+```
+
+## Quem sou eu?
+
+::: columns
+::: {.column width="30%" style="text-align: center;"}
+![](images/duda.png){fig-align="center" width="400"}
+:::
+
+::: {.column width="70%" style="text-align: center;"}
+
+- Doutoranda em Ciência da Computação pela Universidade Federal de Minas Gerais
+
+- Mestre em Ciência da Computação pela Universidade Federal de Minas Gerais
+
+- Graduada em Ciência de Computação pela Universidade Federal de Alagoas
+
+- **Tópicos de interesse**: Análise de dados temporais, Padrões ordinais e Deep Learning
+:::
+:::
+
+## Como será a apresentação?
+
+<br/>
+
+A apresentação se encontra disponível no seguinte link:
+
+![](images/QRCode_apresentacao.png){width="300"}
+
+## Como será a apresentação?
+
+
+
+<br/><br/>
+
+::: columns
+::: {.column width="50%" style="text-align: center;"}
+![](images/icons8-code-64.png)
+
+**Objetivo 1:**
+
+Apresentar conceitos e técnicas para detecção de ataques em sistemas IoT
+:::
+
+::: {.column width="50%" style="text-align: center;"}
+![](images/icons8-code-R-64.png)
+
+**Objetivo 2:**
+
+Apresentar o pacote NATS como a ferramenta de análise
+:::
+:::
+
+# Dados temporais em IoT
+
+## Internet das Coisas (IoT)
+
+::: columns
+::: {.column width="40%"}
+> Cenários em que a conectividade de rede e a capacidade de computação se estendem a objetos normalmente não considerados computadores, permitindo que esses dispositivos gerem, troquem e consumam dados com o mínimo de intervenção humana.
+
+::: aside
+ROSE, Karen; ELDRIDGE, Scott; CHAPIN, Lyman.
+The Internet of Things: An Overview.
+2015.
+[www.internetsociety.org/iot-overview](https://www.internetsociety.org/resources/doc/2015/iot-overview/).
+:::
+:::
+
+::: {.column width="60%"}
+<br/> ![](images/IoT.png){fig-align="center" width="800"}
+:::
+:::
+
+## Internet das Coisas (IoT)
+
+Exemplos de aplicações:
+
+- Manutenção preditiva do comportamento de máquinas industriais 
+
+- Detecção de congestionamento de tráfego e incidentes a partir da análise de rastreamento por GPS
+
+- Detecção em tempo real de consumo de energia 
+
+- Detecção de anomalia comportamental baseada em sensores vestíveis inteligentes
+
+## Análise de Dados Temporais
+
+::: columns
+::: {.column width="40%"}
+> Séries temporais são conjunto de dados obtidos a partir de um processo observacional ao longo de um determinado período de tempo, não necessariamente dividido em espaços iguais, caracterizados pela dependência serial existente entre as observações.
+
+::: aside
+CHAGAS, Eduarda TC; FRERY, Alejandro C. Análise de Sinais com Distâncias Estocásticas e Diferenças de Entropias: Ferramentas para Análise de Séries Temporais
+[www.sbpcnet.org.br/livro/70ra/trabalhos/resumos/2057_1bd84a60390f2d625e81516a6f9b90349.pdf](http://www.sbpcnet.org.br/livro/70ra/trabalhos/resumos/2057_1bd84a60390f2d625e81516a6f9b90349.pdf).
+:::
+:::
+
+::: {.column width="60%"}
+![](images/time_series.png){fig-align="center" width="800"}
+:::
+:::
+
+# Botnets
+
+## O que são botnets?
+
+Um bot consiste de um software malicioso que pode ser usado para controlar remotamente dispositivos IoT através de um invasor, o botmaster.
+
+A infecção por bots possui como principal ameaça à segurança a possibilidade de ataques orquestrados em grande escala, ex:
+
+- Entrega de spam
+
+- Ataques distribuídos de negação de serviço (DDoS)
+
+Número de dispositivos IoT atacados compensa a falta de recursos computacionais dessas máquinas.
+
+## O que são botnets?
+
+Uma vez que um dispositivo é infectado pelo malware Mirai, um dos botnets mais proeminentes para ataques DDoS, ele executa automaticamente algumas etapas operacionais que alteram seu tráfego de rede.
+
+Algumas etapas operacionais executadas após um dispositivo ser infectado pelo malware Mirai:
+
+- Escanear a rede em busca de novas vítimas
+
+- Enviar relatórios
+
+- Receber comandos de um servidor de comando e controle (C&C)
+
+- Enviar tráfego de ataque para um servidor de destino
+
+Essa alterações de padrões no tráfego de rede podem ser interpretadas como um comportamento anômalo e ser usada para detectar um dispositivo comprometido.
+
+::: aside
+KOLIAS, Constantinos et al. DDoS in the IoT: Mirai and other botnets. Computer, v. 50, n. 7, p. 80-84, 2017.
+:::
+
+## Principais objetivos
+
+Ao longo deste tutorial gostaremos de responder as seguintes perguntas:
+
+1) Como mudanças comportamentais produzidas por ataques de botnets afetam a dinâmica temporal dos dispositivos?
+
+2) Como utilizar comportamentos de dinâmicas temporais para detectar anomalias que representam um ataque?
+
+## N-BaIoT Dataset
+
+N-BaIoT consiste em um dataset com dados de tráfego de rede coletado de nove dispositivos IoT durante operações regulares (benigno) e sob ataques de botnet (anomalias).
+
+O tráfego de rede anômalo foi gerado infectando cada dispositivo com as famílias de botnet Mirai e Bashlite.
+
+::: aside
+MEIDAN, Yair et al. N-baiot—network-based detection of iot botnet attacks using deep autoencoders. IEEE Pervasive Computing, v. 17, n. 3, p. 12-22, 2018.
+APA	
+:::
+
+## N-BaIoT Dataset
+
+**Framework Kitsune** - Modelo de rede usado para capturar o tráfego de pacotes de um determinado dispositivo IoT suspeito.
+
+- Todo o tráfego de um determinado dispositivo flui através de um roteador local
+
+- Um agente dentro desse roteador capturará e analisará passivamente os pacotes recebidos para calcular as medidas de tráfego da rede
+
+![](images/kitsune_framework.png){fig-align="center" width="800"}
+
+Nossa estratégia precisa apenas de dados de uma única medida de tráfego de rede, o número de pacotes de um dispositivo, agregados em uma janela de tempo de $100$ ms. 
+
+## N-BaIoT Dataset
+
+Foram coletados dados de nove dispositivos IoT: um termostato, uma babá eletrônica, uma webcam, duas campainhas e quatro câmeras de segurança.
+
+::: columns
+::: {.column width="50%"}
+Para o botnet Mirai, os ataques foram: 
+
+1) Inundação de ACK
+
+2) Varrer a rede para novas vítimas
+
+3) Inundação de SYN
+
+4) Inundação de UDP 
+
+5) UDPPLAIN, que é outra inundação de UDP, mas com menos opções
+:::
+
+::: {.column width="50%"}
+Para o botnet Bashlite, os ataques foram: 
+
+1) Varrer a rede em busca de novos dispositivos vulneráveis 
+
+2) JUNK, que consiste no envio de dados de spam
+
+3) COMBO de envio de dados de spam e conexão a um endereço IP e porta específicos
+
+:::
+:::
+
+## N-BaIoT Dataset
+
+
+```{r}
+#| echo: false
+classes_names <- c(
+      "benign_traffic",
+      "gafgyt_combo_attack",
+      "gafgyt_junk_attack",
+      "gafgyt_scan_attack",
+      #"gafgyt_tcp_attack",
+      #"gafgyt_udp_attack",
+      "mirai_ack_attack",
+      "mirai_scan_attack",
+      "mirai_syn_attack",
+      "mirai_udp_attack",
+      "mirai_udpplain_attack"
+)
+    
+n_classes = length(classes_names)
+```
+
+```{r}
+#| echo: false
+plot_BaIoT_dataset <- function(df_series, n_elements = 400){
+  
+  df_series <- df_series[1:n_elements, ]
+  df_melted_series <- melt(df_series, id.vars="index", variable.name="Operation")
+  
+  ggplot(df_melted_series, aes(index, value)) +
+    geom_line(aes(colour = Operation)) + 
+    xlab("Number of samples") + ylab("MI_dir_L5_weight") + 
+    theme_few(base_size = 12) + theme(legend.position="bottom")
+}
+```
+
+```{r}
+df_series = read.csv("data/Philips_B120N10_Baby_Monitor.csv")
+head(df_series)
+```
+
+## N-BaIoT Dataset
+
+```{r}
+plot_BaIoT_dataset(df_series, n_elements = 400)
+```
+
+# Padrões ordinais
+
+## Simbolização de Bandt-Pompe
+
+Principais requisitos esperados em abordagens de análise de dados temporais:
+
+- Ser simples, rápida e transparente
+- Fazer pouca ou nenhuma suposição sobre o processo subjacente
+- Ser resiliente em relação a outliers
+
+**Bandt-Pompe** consiste de uma nova representação de séries temporais por padrões ordinais.
+
+## Simbolização de Bandt-Pompe
+
+Seja ${\mathcal X} \equiv \{x_t\}_{t=1}^{T}$ uma série temporal de comprimento $T$. Para capturar tais informações de ordem, os seguintes passos devem ser realizados:
+
+- **Particionamento**: A série inicialmente será particionada em subconjuntos de dimensão $D$, 
+    com $\tau$ intervalos entre os pontos da série, possuindo assim a seguinte estrutura: 
+    
+$$\mathbf X^{(D,\tau)}_t =( x_t,x_{t+\tau},\dots,x_{t+(D-1)\tau}),$$ 
+    
+para $t = 1,2,\dots,N$, onde $N = T-(D-1) \tau$.
+
+- **Permutação**: Os padrões ordinais serão obtidos através da permutação dos índices de cada partição, de forma que estes elementos sejam ordenados de forma crescente.
+
+
+## Simbolização de Bandt-Pompe
+
+<br/>
+**Mapeamento de permutação por índices cronológicos**: ocorre pelos índices temporais ordenados de acordo com suas amplitudes.
+
+<br/>
+Abaixo podemos ver o conjunto completo de padrões formado para $D = 3$:
+
+![](images/Chronological.png){fig-align="center" width="800"}
+
+## Simbolização de Bandt-Pompe
+
+::: columns
+
+::: {.column width="60%"}
+![](images/IntroBP.png){fig-align="center" width="800"}
+:::
+
+::: {.column width="40%"}
+
+Ao usar $D=5$ e $\tau=1$: 
+
+<br/>
+
+$\mathbf X_{3}^{(5,1)}=(4.2, 5.8, 5.2, 5.5, 3.3)$
+
+$\mathbf X_{3}^{(5,1)} \to 51342$
+
+<br/>
+
+Ao usar $D=5$ e $\tau=2$: 
+
+<br/>
+
+$\mathbf X_{1}^{(5,2)}=(2.8, 4.2, 5.2, 3.3, 2.2)$
+
+$\mathbf X_{1}^{(5,2)} \to 51423$
+
+:::
+:::
+
+## Simbolização de Bandt-Pompe
+
+
+::: columns
+::: {.column width="40%"}
+<br/>
+A partir do conjunto de padrões ordinais podemos seguir com três tipos de análise: 
+
+- Métricas de autocorrelação
+- Distribuição marginal 
+- Abordagem transacional
+
+
+:::
+
+::: {.column width="60%"}
+![](images/general_outline.png){fig-align="center" width="900"}
+:::
+:::
+
+## Simbolização de Bandt-Pompe
+
+<br/> Principais características:
+
+- Suavização dos dados
+- Técnica não paramétrica
+- Transformação resistente a ruídos
+- Invariante a transformações monotônicas
+
+# NATS
+
+## O que é o NATS?
+
+
+O NATS surgiu com a necessidade de construir uma ferramenta gráfica/pacote de simples utilização mais completo da literatura.
+
+Abaixo vemos uma tabela resumo com as principais features e funcionalidades utilizados na literatura e presentes em cada pacote R:
+
+![](images/r_packages.jpg){fig-align="center" width="600"}
+
+## O que é o NATS?
+
+::: columns
+
+::: {.column width="60%"}
+
+- Sistema web desenvolvido em R usando o framework Shinny
+
+- Ferramenta gráfica amigável
+
+- Recursos rápidos, eficientes e numericamente confiáveis
+
+- Apresenta portabilidade para vários sistemas operacionais e arquiteturas de hardware
+
+- Use apenas ferramentas FLOSS (Free/Libre Open Source Software)
+
+:::
+
+::: {.column width="40%"}
+![](images/QRCode_nats_site.png){fig-align="center" width="600"}
+:::
+:::
+
+## Pacote NATS
+
+
+::: columns
+
+::: {.column width="60%"}
+Além da versão web, também construímos um pacote R com algumas rotinas de:
+
+- Geração de plots
+
+- Cálculo da distribuição de Bandt-Pompe e suas principais variantes
+
+- Cálculo de medidas de entropia, divergências e complexidade estatística
+
+- Funções de plot dos planos Fisher-Shannon e Entropia-Complexidade
+
+:::
+
+::: {.column width="40%"}
+![](images/QRCode_nats_package.png){fig-align="center" width="600"}
+:::
+:::
+
+# Análise de padrões ordinais
+
+## Métricas de autocorrelação
+
+<br/>
+
+A frequência dos padrões não são fáceis de interpretar e certas combinações de frequências podem ser mais significativas.
+
+<br/>
+
+> "$\mathbb P({\pi_i})$ para um dado $D$ pode ser interpretada como a função de autocorrelação. Ambos são obtidos por uma espécie de média ao longo de um determinado período de tempo." 
+
+<br/>
+
+**Suposição de estacionariedade para o processo**: a probabilidade de um padrão não muda durante o tempo.
+
+- Na prática, o que fazemos é dividir a série em pequenas partes estacionárias
+
+::: aside
+BANDT, Christoph. Small order patterns in big time series: A practical guide. Entropy, v. 21, n. 6, p. 613, 2019.
+:::
+
+
+## Métricas de autocorrelação
+<br/>
+
+**Up-down balance** ($\beta$) - mede a assimetria, não-Gaussianidade ou irreversibilidade do processo:
+
+![](images/up_down_balance.png){fig-align="center" width="300"}
+
+**Turning rate** ($\alpha$) - mede a quantidade relativa de máximos e mínimos locais presentes na série. 
+
+![](images/turning_rate.png){fig-align="center" width="700"}
+
+::: aside
+BANDT, Christoph. Order patterns, their variation and change points in financial time series and Brownian motion. Statistical Papers, v. 61, n. 4, p. 1565-1588, 2020.
+:::
+
+## Histograma de frequências
+
+Podemos calcular uma distribuição de probabilidade a partir da frequência relativa dos símbolos contra os $D!$ possíveis padrões:
+
+$$p(\widetilde\pi_t^D) = \frac{ \# \left \{\mathbf X_t^{(D,\tau)} \text{ é do tipo } \widetilde\pi_t^D \right\}}{T- (D-1)\tau}$$
+
+onde $t \in \{1, \dots, T-(D-1)\tau\}$.
+
+<br/>
+
+![](images/distributions.png){fig-align="center" width="1000"}
+   
+## Histograma de frequências (prática)
+
+
+```{r}
+#| echo: false
+plot_hists <- function(df_series, dimension=3, delay=1){
+  h_plot = array(list(), n_classes)
+  
+  hist_plots = lapply(df_series, Histogram, dimension=3, delay=1)
+  
+  for(i in 1:n_classes){
+    h_plot[[i]] = hist_plots[[i]] + ggtitle(classes_names[i])
+  }
+  
+  ggarrange(h_plot[[1]], h_plot[[2]], h_plot[[3]], 
+          h_plot[[4]], h_plot[[5]], h_plot[[6]], 
+          h_plot[[7]], h_plot[[8]], h_plot[[9]], 
+          ncol=3, nrow=3) + 
+  theme(text=element_text(size=8))
+}
+```
+
+
+```{r}
+probs_3_1 = lapply(df_series, BandtPompe, dimension=3, delay=1)
+
+plot_hists(df_series, dimension=3, delay=1)
+```
+
+## Grafos de transição
+
+::: columns
+::: {.column width="60%"}
+O grafo de transição de padrões ordinais ${G} = ({V}, {E})$ representa como se comportam as transições entre dois padrões ordinais consecutivos ao longo de uma sequência.
+
+Nesta nova representação, cada vértice corresponderá a um símbolo e as arestas às transições entre estes:
+$V = \{v_{\widetilde\pi_t^D}\}$, e
+$E = \{(v_{\widetilde\pi_t^D}, v_{\widetilde\pi_{t+1}^D}): v_{\widetilde\pi_t^D}, v_{\widetilde\pi_{t +1}^D} \in V \}$
+
+::: aside
+BORGES, João B. et al. Learning and distinguishing time series dynamics via ordinal patterns transition graphs. Applied Mathematics and Computation, v. 362, p. 124554, 2019.
+:::
+:::
+
+::: {.column width="40%"}
+<br/> ![](images/transition_graph.png){fig-align="center" width="600"}
+:::
+:::
+
+## Grafos de transição
+
+<br/> ![](images/TransitionGraph.png){fig-align="center" width="1600"}
+
+
+## Grafos de transição
+
+::: columns
+::: {.column width="60%"}
+
+Os pesos $\mathbb W = \{w_{v_{\widetilde{\pi}^D_i}, v_{\widetilde\pi^D_j}}: v_{\widetilde\pi^D_i}, v_{\widetilde \pi^D_j} \in V \}$ atribuídos a cada aresta descreve a probabilidade de existência de transições entre os padrões $(v_{\widetilde\pi^D_i}, v_{\widetilde\pi^D_j})$ ao longo da sequência, ou seja, os pesos são calculados como a frequência relativa de cada transição:
+\begin{equation}
+w_{v_{\widetilde\pi^D_i}, v_{\widetilde\pi^D_j}} = \frac{|\Pi_{\widetilde\pi^D_i,\widetilde\pi^D_j}|}{T-( D-1)\tau-1},
+\end{equation}
+onde $|\Pi_{\widetilde\pi^D_i,\widetilde\pi^D_j}|$ é o número de transições do padrão $\widetilde\pi^D_i$ para o padrão $\widetilde\pi^D_j$.
+
+::: aside
+BORGES, João B. et al. Learning and distinguishing time series dynamics via ordinal patterns transition graphs. Applied Mathematics and Computation, v. 362, p. 124554, 2019.
+:::
+:::
+
+::: {.column width="40%"}
+<br/> ![](images/transition_graph.png){fig-align="center" width="600"}
+:::
+:::
+
+
+## Grafos de transição
+
+::: columns
+::: {.column width="60%"}
+
+**Probabilidade de auto-transição**: mensura a probabilidade de ocorrer um loop no grafo, ou seja, dois padrões iguais ocorrerem sequencialmente. Foi mostrado na literatura que esta medida está diretamente relacionada com a correlação temporal das séries temporais.
+
+$$p_{st} = \sum_{i = 1}^{D!} p(\pi_i, \pi_i)$$
+
+::: aside
+BORGES, João B. et al. Learning and distinguishing time series dynamics via ordinal patterns transition graphs. Applied Mathematics and Computation, v. 362, p. 124554, 2019.
+:::
+:::
+
+::: {.column width="40%"}
+<br/> ![](images/transition_graph.png){fig-align="center" width="600"}
+:::
+:::
+
+## Grafos de transição (prática)
+
+```{r}
+#| echo: false
+plot_tg_hists <- function(probs_graph){
+  hist_plots = array(list(), n_classes)
+  
+  for(i in 1:n_classes){
+    probs_graph[[i]] = as.vector(probs_graph[[i]])
+    
+    df_probs_graph = data.frame(
+      index = c(1:length(probs_graph[[i]])), 
+      value = probs_graph[[i]]
+    )
+    
+    hist_plots[[i]] = ggplot(data=df_probs_graph, aes(x=index, y=value)) + 
+      geom_bar(stat = "identity") + 
+      labs(x="", y="") + ggtitle(classes_names[i]) +
+      theme_few(base_size = 18)  
+      
+  }
+  
+  ggarrange(hist_plots[[1]], hist_plots[[2]], hist_plots[[3]], 
+          hist_plots[[4]], hist_plots[[5]], hist_plots[[6]], 
+          hist_plots[[7]], hist_plots[[8]], hist_plots[[9]], 
+          ncol=3, nrow=3) + 
+  theme(text=element_text(size=8))
+}
+```
+
+```{r}
+probs_graph_3_1 = lapply(df_series, TransitionGraphs, dimension=3, delay=1)
+
+plot_tg_hists(probs_graph_3_1)
+```
+
+# Features dos histogramas
+
+## Entropia normalizada de Shannon
+    
+A entropia mede a desordem ou imprevisibilidade de um sistema caracterizado por uma distribuição de probabilidade.
+
+$$
+        H_S(p) = -\frac1{\log D!}\sum_{\ell=1}^{D!} p_{\ell} \log p_{\ell}.
+$$
+Notem que $H_S(p) \in [0,1]$ para todo $p$.
+
+## Entropia normalizada de Shannon
+
+```{r}
+lapply(probs_3_1, ShannonEntropyNormalized)
+```
+
+## Complexidade Estatística
+
+A complexidade estatística mensura o grau de dependência estrutural entre os elementos da série temporal.
+    
+$$
+        C_{JS} = H_S(p) Q_{JS}(p, U)
+$$
+    
+onde $Q_{JS}$ será uma medida de desiquilíbrio, uma medida de quão distante $p$ está de uma distribuição de equilíbrio, ou seja, de uma distribuição não informativa (usualmente, a distribuição uniforme).
+    
+## Complexidade Estatística
+
+```{r}
+lapply(probs_3_1, StatisticalComplexity)
+```
+
+## Medida de informação de Fisher
+
+A informação de Fisher é uma medida capaz de capturar a concentração de uma distribuição. 
+
+**Entropia de Shannon**: mede o espalhamento global da distribuição 
+
+**Informação de Fisher**: possui propriedade de localidade porque reflete as diferenças entre probabilidades consecutivas de uma distribuição. 
+
+A informação de Fisher para o caso discreto é dada por:
+
+$$
+F[p_{\pi}] = F_0 \sum^{D! - 1}_{t = 1} (\sqrt{p_{t+1}} - \sqrt{p_{t}})^2,
+$$
+
+onde $F_0$ é uma constante de normalização.
+
+## Medida de informação de Fisher
+
+```{r}
+lapply(probs_3_1, FisherEntropy)
+```
+
+## Plano Entropia-Complexidade
+
+![](images/AllSystems.png){fig-align="center" width="1000"}
+
+## Plano Entropia-Complexidade
+
+![](images/BoundariesPlot.png){fig-align="center" width="1000"}
+
+## Plano Entropia-Complexidade
+
+```{r}
+prob_matrix <- t(do.call("cbind",probs_3_1))[1:9,]
+HCPlane(prob = prob_matrix)
+```
+
+<!--## Plano Fisher-Shannon
+
+<br/>
+
+**Entropia de Shannon**: medida de “caráter global” que é invariante a fortes mudanças na distribuição, 
+
+**Informação de Fisher**: medida da capacidade de modelar uma distribuição, que corresponde às características “locais”.
+
+::: aside
+ROSSO, Osvaldo A.; OLIVARES, Felipe; PLASTINO, Angelo. Noise versus chaos in a causal Fisher-Shannon plane. Papers in physics, v. 7, n. 1, p. 0-0, 2015.
+:::
+
+## Plano Fisher-Shannon
+
+![](images/fisher_shannon_plane.png){fig-align="center" width="1000"}-->
+
+# Features dos grafos de transição
+
+## Número de arestas
+
+Como as arestas representam a ocorrência de transições entre padrões consecutivos, seu número é um indicador da dinâmica das séries temporais. 
+
+Por exemplo, à medida que a aleatoriedade de um processo aumenta, também aumentam as chances de que todas as transições possíveis no gráfico ocorram.
+
+O número de arestas pode ser computado pela seguinte equação:
+
+$$
+N_E = |E[G_{\pi}]|
+$$
+
+## Número de arestas
+
+```{r}
+lapply(probs_graph_3_1, NumberEdges)
+```
+
+## Entropia normalizada de Shannon 
+
+Entropia aplicada em relação aos pesos das arestas.
+
+```{r}
+lapply(probs_graph_3_1, ShannonEntropyNormalized)
+```
+
+## Complexidade Estatística 
+
+Complexidade estatística aplicada em relação aos pesos das arestas.
+
+```{r}
+lapply(probs_graph_3_1, StatisticalComplexity)
+```
+
+
+## Medida de informação de Fisher
+
+Medida de informação de Fisher aplicada em relação aos pesos das arestas.
+
+```{r}
+lapply(probs_graph_3_1, FisherEntropy)
+```
+
+## Probabilidade de auto-transição
+
+$p_{st}$ : 
+
+- Probabilidade de ocorrer uma sequência de padrões idênticos
+- Loops presentes no grafo de transição
+- Diretamente relacionada à correlação temporal das séries temporais
+
+::: aside
+BORGES, João B. et al. Learning and distinguishing time series dynamics via ordinal patterns transition graphs. Applied Mathematics and Computation, v. 362, p. 124554, 2019.
+:::
+
+
+## Probabilidade de auto-transição
+
+```{r}
+lapply(probs_graph_3_1, SelfTransitionProb)
+```
+
+# Abordagem Multiescala
+
+## Transformação Multiescala
+
+<br/><br/>
+
+Para cada série temporal $X$ e para cada par $(D, \tau_i)$ teremos um conjunto de features:
+
+$$
+f_{\tau_i} = \{f_{\tau_i, 1}, f_{\tau_i, 2}, \dots, f_{\tau_i, j}\},
+$$
+
+onde $j$ é o número total de features extraídas na análise.
+
+## Transformação Multiescala 
+
+Em nossa análise teremos:
+
+$$
+f_{\tau_i} = \{N^{\tau_i}_E, H_{S}[E_w]^{\tau_i}, C_{JS}[E_w]^{\tau_i}, F[E_w]^{\tau_i}, p_{s_t}^{\tau_i}, H_{S}[p_{\pi}]^{\tau_i}, C_{JS}[p_{\pi}]^{\tau_i}, F[p_{\pi}]^{\tau_i}\}
+$$
+
+$H_{S}[p_{\pi}]^{\tau_i}$: Entropia Normalizada de Shannon em relação ao histograma de frequência
+
+$C_{JS}[p_{\pi}]^{\tau_i}$: Complexidade Estatística em relação ao histograma de frequência
+
+$F[p_{\pi}]^{\tau_i}$: Medida de Informação de Fisher em relação ao histograma de frequência
+
+$N^{\tau_i}_E$: Número de arestas
+
+$H_{S}[E_w]^{\tau_i}$: Entropia Normalizada de Shannon em relação aos pesos das arestas
+
+$C_{JS}[E_w]^{\tau_i}$: Complexidade Estatística em relação aos pesos das arestas
+
+$F[E_w]^{\tau_i}$: Medida de Informação de Fisher em relação aos pesos das arestas
+
+$p_{s_t}^{\tau_i}$: Probabilidade de auto-transição
+
+## Transformação Multiescala (prática)
+
+Processo de transformação de séries temporais para descritores obtidos a partir da transformação multiescala:
+
+![](images/multiscale_ordinal_patterns.png){fig-align="center" width="1000"}
+
+## Transformação Multiescala (prática)
+
+Transformando em código:
+
+```{r}
+#| echo: false
+D = 3
+Taus = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+
+n_features = 8
+series_features <- array(dim = c(n_classes, length(Taus), n_features))
+```
+
+```{r}
+extract_features <- function(){
+  for(class_series in 1:n_classes){
+    for(i in 1:length(Taus)){
+      probs_hist = BandtPompe(df_series[, class_series], dimension=3, Taus[i])
+      series_features[class_series, i, 1] = ShannonEntropyNormalized(probs_hist)
+      series_features[class_series, i, 2] = StatisticalComplexity(probs_hist)
+      series_features[class_series, i, 3] = FisherEntropy(probs_hist)
+      
+      probs_graph = TransitionGraphs(df_series[, class_series], dimension=3, Taus[i])
+      series_features[class_series, i, 4] = number_edges(probs_graph)
+      series_features[class_series, i, 5] = ShannonEntropyNormalized(probs_graph)
+      series_features[class_series, i, 6] = StatisticalComplexity(probs_graph)
+      series_features[class_series, i, 7] = FisherEntropy(probs_graph)
+      series_features[class_series, i, 8] = self_transition_prob(probs_graph)
+    }
+  }
+}
+```
+
+# Detecção de ataques de botnets
+
+## Análise de Dados Temporais
+
+<br/>
+
+Quando pensamos em classificação de dados temporais podemos ter dois diferentes cenários de análise:
+
+::: columns
+::: {.column width="50%"}
+
+**1) N:1**
+
+Para cada sequência de comprimento $N$ teremos uma label associada.
+<br/><br/>
+![](images/sample_many_1.png){fig-align="center" width="800"}
+
+
+:::
+
+::: {.column width="50%"}
+
+**2) 1:1**
+
+Para cada elemento da série teremos um rótulo associado.
+![](images/sample_1_1.png){fig-align="center" width="800"}
+:::
+:::
+
+## Detecção de anomalias em dispositivos IoT
+
+Para utilizarmos padrões ordinais na tarefa de classificação de padrões anômalos produzidos por botnets, seguiremos os seguintes passos:
+
+1. **Capturaremos** informações de número de pacotes enviados do dispositivo suspeito diretamento do seu tráfego de rede.
+
+2. **Transformaremos** as séries temporais, por meio da transformação de padrões ordinais, em um conjunto de features que podem capturar o comportamento dinâmico dos dispositivos.
+
+3. **Classificaremos** as features de cada série temporal como anômala ou regular.
+
+## Processo de treinamento
+
+Para treinarmos o modelo precisaremos:
+
+1) **Capturar** $n$ séries temporais das medidas de tráfego de rede de um dispositivo $k$:
+
+$$
+\mathbb X^k_{n \times m} = [\mathbb x^k_1, \mathbb x^k_2, \dots, \mathbb x^k_n]^T
+$$
+
+Embora a técnica não exija que as séries temporais possuam o mesmo comprimento, por simplicidade adotaremos aqui que cada série temporal possuirá $m$ elementos: 
+
+$$
+\mathbb x^k_{i} = \mathbb x^k_{i_1}, \mathbb x^k_{i_2}, \dots, \mathbb x^k_{i_m}
+$$
+
+2) **Transformar** as $n$ sequências em vetores de features que serão usados no algoritmo de detecção de anomalias:
+
+$$
+\mathbb F^k_{n \times t_j} \gets [f^k_1, f^k_2, \dots, f^k_n]^T
+$$
+
+## Isolation forest
+
+3) **Classificar** cada comportamento do dispositivo como anômalo ou regular utilizando o algoritmo isolation forest.
+
+<br/>
+
+**Isolation Forest** é um algoritmo não supervisionado baseado em árvores de decisão e originalmente desenvolvido para detecção de anomalias em dados tabulares.
+
+- Consiste em particionar aleatoriamente sub-amostras de dados de acordo com algum atributo
+
+- Quanto mais anômala a observação menos divisões aleatórias serão necessárias para isolá-la (profundidade de isolamento)
+
+## Isolation forest (intuição)
+
+```{r}
+example <- c(1, 2, 3, 4, 5, 100, 6, 3, 8, 2)
+
+thresh <- sample(seq(min(example), max(example)), 1)
+thresh
+```
+
+```{r}
+example[example > thresh]
+```
+
+## Isolation forest 
+
+O processo de divisão aleatória é realizado de forma recursiva até que não seja mais possível realizar particionamentos ou até um critério de parada ser atingido.
+
+- Com isso o isolation forest analisa as relações entre variáveis e suas possíveis combinações
+
+- A profundidade de isolamento é utilizada como métrica de outlinerss de uma amostra
+
+- Geralmente são utilizadas várias árvores e o resultado final será a média dos resultados individuais
+
+## Isolation forest (isotree)
+
+Implementação rápida e multi-thread do algoritmo Isolation Forest (a.k.a. iForest) e algumas variações como: 
+
+- Extended Isolation Forest (EIF), 
+
+- Split-Criterion iForest (SCiForest), 
+
+- Fair-Cut Forest (FCF), 
+
+- Robust Random-Cut Forest (RRCF).
+
+Pacote escrito em C++ com interfaces em Python, R e C.
+
+::: aside
+[https://github.com/david-cortes/isotree](https://github.com/david-cortes/isotree).
+:::
+
+## Isolation forest (intuição)
+
+```{r}
+set.seed(123)
+
+random_numbers <- matrix(rnorm(1000))
+
+hist(random_numbers, breaks=50, col="navy")
+```
+## Isolation forest (intuição)
+
+```{r}
+library(isotree)
+
+model <- isolation.forest(random_numbers, ndim=1, ntrees=10, nthreads=1)
+scores <- predict(model, random_numbers, type="avg_depth")
+
+plot(x=random_numbers, y=scores, type="p", col="darkred")
+```
+
+## Isolation forest (prática)
+
+```{r}
+#| echo: false
+featureAsDataset = function(x, series_len, label=1, skip=0)
+{
+    # nuumber of first measures to skip
+    if (skip > 0)
+    {
+        x = x[(skip+1):length(x)]
+    }
+    # number of rows in the dataset
+    nrows = floor(length(x)/series_len)
+
+    # organizing the feature as a matrix
+    df = matrix(x[1:(nrows*series_len)], byrow=T, ncol=series_len)
+
+    # adding the label columns
+    df = cbind(df, rep(label, nrow(df)))
+
+    return(df)
+}
+```
+
+
+
+```{r}
+series_len = 1000
+
+ben_df <- df_series[,1]
+x_ben_df = featureAsDataset(ben_df, series_len)
+
+x_ben_df = x_ben_df[,-ncol(x_ben_df)]
+
+model <- isolation.forest(
+    as.data.frame(x_ben_df), 
+    ndim=n_features, 
+    ntrees=40
+)
+
+summary(model)
+```
+
+
+## Isolation forest (prática)
+
+```{r}
+att_df_1 <- df_series[,2]
+x_att_df_1 = featureAsDataset(att_df_1, series_len, label=1, skip=0)
+
+y_att_df_1 = x_att_df_1[,ncol(x_att_df_1)]
+x_att_df_1 = x_att_df_1[,-ncol(x_att_df_1)]
+```
+
+```{r}
+max_pred = 0.59
+
+res = predict(model, x_att_df_1)
+res = as.numeric(res < max_pred)
+
+print(classes_names[2])
+print(res)
+```
+
+
+## Isolation forest (prática)
+
+```{r}
+att_df_2 <- df_series[,5]
+x_att_df_2 = featureAsDataset(att_df_2, series_len, label=1, skip=0)
+
+y_att_df_2 = x_att_df_2[,ncol(x_att_df_2)]
+x_att_df_2 = x_att_df_2[,-ncol(x_att_df_2)]
+```
+
+```{r}
+res = predict(model, x_att_df_2)
+res = as.numeric(res < max_pred)
+
+print(classes_names[5])
+print(res)
+```
+
+# Outras aplicações
+
+## Outras aplicações
+
+A metodologia Bandt-Pompe e suas variantes têm sido utilizadas com sucesso na análise de diversos tipos de dinâmicas, recebendo até agora mais de $2160$ citações advindas de $684$ periódicos distintos.
+
+Encontramos trabalhos utilizando essa abordagem em diversas áreas do conhecimento científico, dentre elas, análise de dados sob o contexto de IoT, como por exemplo:
+
+> FREITAS, Cristopher GS; ROSSO, Osvaldo A.; AQUINO, Andre LL. Mapping Network Traffic Dynamics in the Complexity-Entropy Plane. In: 2020 IEEE Symposium on Computers and Communications (ISCC). IEEE, 2020. p. 1-6. 
+
+> NASCIMENTO, Givanildo L. et al. Data Sampling Algorithm Based on Complexity-Entropy Plane for Smart Sensing Applications. IEEE Sensors Journal, v. 21, n. 22, p. 25831-25842, 2021.
+
+> CARDOSO-PEREIRA, Isadora et al. Leveraging the self-transition probability of ordinal patterns transition network for transportation mode identification based on GPS data. Nonlinear Dynamics, v. 107, n. 1, p. 889-908, 2022.
+
+
+
+# Problemas de pesquisa 
+
+## Evolução temporal dos temas de pesquisa
+
+![](images/temporal_evolution.png){fig-align="center" width="700"}
+
+## Heurística de escolha dos hiperparâmetros
+
+A heurística (2015) visa escolher os hiperparâmetros cuja entropia seja a mais diferente possível de uma distribuição uniforme.
+
+Para encontrar os hiperparâmetros apropriados para agrupar um conjunto de séries temporais, calculamos a entropia normalizada média de um conjunto de distribuições. 
+
+```{r}
+library(pdc)
+
+heuristic <- entropyHeuristic(df_series[,1:9], m.min = 3, m.max = 7, t.min = 1, t.max = 9)
+plot(heuristic)
+```
+
+## Propriedades estatísticas no Plano $H \times C$
+
+Embora os limites de $H \times C$ estejam bem definidos, uma caracterização completa de sua topologia intrínseca é um problema em aberto, devido às restrições impostas pelo seu espaço curvilíneo.
+
+O desconhecimento da distribuição conjunta dos pontos obtidos por este plano, devido à correlação existente entre suas variáveis, inviabiliza os estudos de estatísticas de teste para séries temporais típicas neste espaço de caracterização.
+
+Resultados nessa direção podem ser encontrados na literatura:
+
+> CHAGAS, Eduarda TC et al. White Noise Test from Ordinal Patterns in the Entropy–Complexity Plane. International Statistical Review, 2022.
+
+> CHAGAS, Eduarda TC et al. Statistical properties of the entropy from ordinal patterns. Chaos 32, 113118 (2022) https://doi.org/10.1063/5.0118706
+
+## Deep Learning
+
+O uso de inteligência artificial com padrões ordinais e descritores de Teoria da Informação ainda é incipiente, destacando-se no uso de algoritmos de aprendizado de máquina em atividades de caracterização/classificação de dados.
+
+> PESSA, Arthur AB et al. Determining liquid crystal properties with ordinal networks and machine learning. Chaos, Solitons & Fractals, v. 154, p. 111607, 2022.
+
+> NEUMAN, Yair; COHEN, Yochai; TAMIR, Boaz. Short-term prediction through ordinal patterns. Royal Society open science, v. 8, n. 1, p. 201011, 2021.
+
+> CHAGAS, Eduarda TC et al. Analysis and classification of SAR textures using information theory. IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing, v. 14, p. 663-675, 2020. 	
+
+## Outros problemas de pesquisa
+
+Sob esse contexto, a seguir discutiremos alguns problemas de pesquisa que são de grande interesse da comunidade de análise de padrões ordinais utilizando a simbolização de Bandt-Pompe. 
+Não temos como objetivo exaurir todos os problemas de pesquisa em aberto na área, desse modo, para uma discussão mais completa, recomendamos o seguinte artigo:
+
+> LEYVA, Inmaculada et al. 20 years of ordinal patterns: Perspectives and challenges. Europhysics Letters, v. 138, n. 3, p. 31001, 2022.
+
+
+# Obrigada! 
+
+eduarda.chagas@dcc.ufmg.br
+
+<!--[Dúvidas? [eduarda.chagas@dcc.ufmg.br](eduarda.chagas@dcc.ufmg.br)]{.custom-github}-->
+
+<!--{background-image="images/tidyverse-celestial.png" aria-label="A galaxy of tidyverse-related hex stickers." background-opacity="0.5"}-->
+
